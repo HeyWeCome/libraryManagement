@@ -27,7 +27,10 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import model.Book;
+import service.BookService;
 import test.Person;
+
+import java.util.Optional;
 
 public class MainView extends Application {
     public static void main(String[] args) { launch(args); }
@@ -48,6 +51,7 @@ public class MainView extends Application {
 
         /**
          * 定义列名
+         * Define column names
          */
         TableColumn<Book, String> bookName = new TableColumn<>("书名");
         bookName.setCellValueFactory(new PropertyValueFactory("bookName"));
@@ -67,34 +71,43 @@ public class MainView extends Application {
         TableColumn<Book, String> createTime = new TableColumn<>("入库时间");
         createTime.setCellValueFactory(new PropertyValueFactory("createTime"));
 
-        TableColumn<Book, Boolean> actionCol = new TableColumn<>("删除");
-        actionCol.setSortable(false);
+        TableColumn<Book, Boolean> operator = new TableColumn<>("操作");
+        operator.setSortable(false);
 
         // define a simple boolean cell value for the action column so that the column will only be shown for non-empty rows.
-        actionCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Book, Boolean>, ObservableValue<Boolean>>() {
-            @Override public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<Book, Boolean> features) {
+        // 操作只会出现在非空的数据行
+        operator.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Book, Boolean>, ObservableValue<Boolean>>() {
+            @Override
+            public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<Book, Boolean> features) {
                 return new SimpleBooleanProperty(features.getValue() != null);
             }
         });
 
-        // create a cell value factory with an add button for each row in the table.
-        actionCol.setCellFactory(new Callback<TableColumn<Book, Boolean>, TableCell<Book, Boolean>>() {
+        // create a cell value factory with an delete button for each row in the table.
+        // 在表格中的每一行都放置一个删除以及修改按钮
+        operator.setCellFactory(new Callback<TableColumn<Book, Boolean>, TableCell<Book, Boolean>>() {
             @Override public TableCell<Book, Boolean> call(TableColumn<Book, Boolean> personBooleanTableColumn) {
-                return new AddPersonCell(stage, table);
+
+                return new operatorCell(stage, table);
             }
         });
 
-        table.getColumns().setAll(bookName, author, price, publishingHouse, amount,createTime,actionCol);
+        table.getColumns().setAll(bookName, author, price, publishingHouse, amount,createTime,operator);
+        // 设置表格自适应
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
 
         stage.setScene(new Scene(table));
         stage.show();
     }
 
-    /** A table cell containing a button for adding a new person. */
-    private class AddPersonCell extends TableCell<Book, Boolean> {
+    /**
+     * A table cell containing a button for adding a new book.
+     * 新增书籍按钮
+     */
+    private class AddBookCell extends TableCell<Book, Boolean> {
         // a button for adding a new person.
-        final Button deleteButton       = new Button("删除");
+        final Button deleteButton = new Button("新增");
         // pads and centers the add button in the cell.
         final StackPane paddedButton = new StackPane();
         // records the y pos of the last button press so that the add person dialog can be shown next to the cell.
@@ -105,7 +118,7 @@ public class MainView extends Application {
          * @param stage the stage in which the table is placed.
          * @param table the table to which a new person can be added.
          */
-        AddPersonCell(final Stage stage, final TableView table) {
+        AddBookCell(final Stage stage, final TableView table) {
             paddedButton.setPadding(new Insets(3));
             paddedButton.getChildren().add(deleteButton);
             deleteButton.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -126,6 +139,86 @@ public class MainView extends Application {
 
         /** places an add button in the row only if the row is not empty. */
         @Override protected void updateItem(Boolean item, boolean empty) {
+            super.updateItem(item, empty);
+            if (!empty) {
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                setGraphic(paddedButton);
+            } else {
+                setGraphic(null);
+            }
+        }
+    }
+
+    /**
+     * A table cell containing a button for deleting book and a button for modifying book.
+     * 修改书籍和删除书籍按钮组
+     */
+    private class operatorCell extends TableCell<Book,Boolean>{
+        //删除一本书的按钮
+        final Button deleteButton = new Button("删除");
+        final Button modifyButton = new Button("修改");
+        // 在单元格中放置新增按钮并居中的布局
+        final HBox paddedButton = new HBox();
+        // records the y pos of the last button press so that the add person dialog can be shown next to the cell.
+        final DoubleProperty buttonY = new SimpleDoubleProperty();
+
+        /**
+         * 构造函数 operatorCell constructor
+         * @param stage：表格放置的舞台 the stage in which the table is placed.
+         * @param table：按钮放置的表格 the table to which buttons can be added.
+         */
+        operatorCell(final Stage stage, final TableView table) {
+            paddedButton.getChildren().addAll(modifyButton,deleteButton);
+
+            deleteButton.setOnMousePressed(new EventHandler<MouseEvent>() {
+                @Override public void handle(MouseEvent mouseEvent) {
+                    buttonY.set(mouseEvent.getScreenY());
+                }
+            });
+            deleteButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override public void handle(ActionEvent actionEvent) {
+                    // 获取要删除的书籍信息
+                    Book deleteBook = (Book) table.getSelectionModel().getSelectedItem();
+                    // 判断用户是否要删除
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setContentText("是否删除该书籍");
+                    Optional result = alert.showAndWait();
+                    if (result.get() == ButtonType.OK) {
+                        BookService bookService = new BookService();
+                        int deleteResult = bookService.deleteBook(deleteBook.getId());
+
+                        // 返回1 删除成功 返回 0 删除失败
+                        if(deleteResult == 1){
+                            Alert deleteResultNotify = new Alert(Alert.AlertType.INFORMATION);
+                            deleteResultNotify.setTitle("删除结果提示");
+                            deleteResultNotify.setHeaderText(null);
+                            deleteResultNotify.setContentText("删除成功");
+                            deleteResultNotify.showAndWait();
+                        }else {
+                            Alert deleteResultNotify = new Alert(Alert.AlertType.WARNING);
+                            deleteResultNotify.setTitle("删除结果提示");
+                            deleteResultNotify.setHeaderText(null);
+                            deleteResultNotify.setContentText("删除失败");
+                            deleteResultNotify.showAndWait();
+                        }
+
+                        table.getSelectionModel().select(getTableRow().getIndex());
+                        table.refresh();
+                    } else {
+                        alert.close();
+                    }
+
+//
+                }
+            });
+    }
+
+        /**
+         * 当这一行的数据不为空时，放置一个新增按钮
+         * places an add button in the row only if the row is not empty.
+         */
+        @Override
+        protected void updateItem(Boolean item, boolean empty) {
             super.updateItem(item, empty);
             if (!empty) {
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -198,13 +291,5 @@ public class MainView extends Application {
         dialog.setScene(new Scene(layout));
         dialog.show();
     }
-
 }
 
-
-//        musicCol.setCellFactory(p -> new TreeTableCell<ViewJob, String>() {
-//@Override
-//protected void updateItem(String item, boolean empty) {
-//        super.updateItem(item, empty);
-//        }
-//        });
