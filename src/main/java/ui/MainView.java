@@ -13,6 +13,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -25,14 +26,19 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import model.Book;
 import service.BookService;
 import test.Person;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 public class MainView extends Application {
+    ObservableList<Book> data = FXCollections.observableArrayList(); // 所有的书籍信息
+    final TableView<Book> table = new TableView<>();                 // 创建一个表格
+
     public static void main(String[] args) { launch(args); }
 
     @Override
@@ -40,14 +46,6 @@ public class MainView extends Application {
         stage.setTitle("图书馆管理系统");
         // 添加图标
         stage.getIcons().add(new Image("http://icons.iconarchive.com/icons/double-j-design/ravenna-3d/128/Books-icon.png"));
-
-        // 创建一个表格
-        final TableView<Book> table = new TableView<>(
-            FXCollections.observableArrayList(
-                    new Book("Jacob", "Smith",23.2,"清华大学出版社",233),
-                    new Book("my life", "JVB",23.2,"清华大学出版社",39)
-            )
-        );
 
         /**
          * 定义列名
@@ -96,6 +94,16 @@ public class MainView extends Application {
         // 设置表格自适应
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        /**
+         * 加载所有的书籍
+         */
+        stage.setOnShowing(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent windowEvent) {
+                searchAllBooks();
+            }
+        });
+        table.setItems(data);
 
         stage.setScene(new Scene(table));
         stage.show();
@@ -170,21 +178,33 @@ public class MainView extends Application {
         operatorCell(final Stage stage, final TableView table) {
             paddedButton.getChildren().addAll(modifyButton,deleteButton);
 
-            deleteButton.setOnMousePressed(new EventHandler<MouseEvent>() {
-                @Override public void handle(MouseEvent mouseEvent) {
-                    buttonY.set(mouseEvent.getScreenY());
+            /**
+             * 修改操作
+             */
+            modifyButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+
                 }
             });
+
+            /**
+             * 删除操作
+             */
             deleteButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent actionEvent) {
-                    // 获取要删除的书籍信息
-                    Book deleteBook = (Book) table.getSelectionModel().getSelectedItem();
+                    // 聚焦至要删除的那一行数据
+                    table.getSelectionModel().select(getTableRow().getIndex());
                     // 判断用户是否要删除
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setContentText("是否删除该书籍");
                     Optional result = alert.showAndWait();
                     if (result.get() == ButtonType.OK) {
+                        // 获取要删除的书籍信息
+                        Book deleteBook = (Book) table.getSelectionModel().getSelectedItem();
+                        System.out.println(deleteBook.toString());
                         BookService bookService = new BookService();
+
                         int deleteResult = bookService.deleteBook(deleteBook.getId());
 
                         // 返回1 删除成功 返回 0 删除失败
@@ -201,14 +221,10 @@ public class MainView extends Application {
                             deleteResultNotify.setContentText("删除失败");
                             deleteResultNotify.showAndWait();
                         }
-
-                        table.getSelectionModel().select(getTableRow().getIndex());
-                        table.refresh();
+                        data.remove(deleteBook);
                     } else {
                         alert.close();
                     }
-
-//
                 }
             });
     }
@@ -290,6 +306,21 @@ public class MainView extends Application {
         layout.setPadding(new Insets(5));
         dialog.setScene(new Scene(layout));
         dialog.show();
+    }
+
+    /**
+     * 查找所有的书籍，每次都重新覆盖前台数据
+     */
+    public void searchAllBooks(){
+        BookService bookService = new BookService();
+        ArrayList<Book> books = bookService.searchAllBook();
+        data.clear();       // 首先全部清空
+
+        for (Book book : books) {
+            data.add(book);
+        }
+
+        table.refresh();
     }
 }
 
