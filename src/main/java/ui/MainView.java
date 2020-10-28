@@ -246,51 +246,94 @@ public class MainView extends Application {
     }
 
     /**
-     * shows a dialog which displays a UI for adding a person to a table.
+     * shows a dialog which displays a UI for adding a book to a table.
+     * 在添加书籍的时候展示一个新的框
      * @param parent a parent stage to which this dialog will be modal and placed next to.
-     * @param table the table to which a person is to be added.
+     * @param table the table to which a book is to be added.
      * @param y the y position of the top left corner of the dialog.
      */
-    private void showAddPersonDialog(Stage parent, final TableView<Person> table, double y) {
-        // initialize the dialog.
+    private void showAddPersonDialog(Stage parent, final TableView<Book> table, double y) {
+        // 初始化对话框
         final Stage dialog = new Stage();
         dialog.setTitle("New Person");
-        dialog.initOwner(parent);  //对话框永远在前面
-        dialog.initModality(Modality.WINDOW_MODAL);  //必须关闭对话框后才能操作其他的
-        dialog.initStyle(StageStyle.UTILITY); //对话框-只保留关闭按钮
+        dialog.initOwner(parent);                    // 对话框永远在前面
+        dialog.initModality(Modality.WINDOW_MODAL);  // 必须关闭对话框后才能操作其他的
+        dialog.initStyle(StageStyle.UTILITY);        // 对话框-只保留关闭按钮
         dialog.setX(parent.getX() + parent.getWidth());
         dialog.setY(y);
 
         // create a grid for the data entry.
+        // 为输入创建面板
         GridPane grid = new GridPane();
-        final TextField firstNameField = new TextField();
-        final TextField lastNameField = new TextField();
-        grid.addRow(0, new Label("First Name"), firstNameField);
-        grid.addRow(1, new Label("Last Name"), lastNameField);
+        final TextField bookName = new TextField();
+        final TextField author = new TextField();
+        final TextField price = new TextField();
+        final TextField publishingHouse = new TextField();
+        final TextField amount = new TextField();
+
+        grid.addRow(0, new Label("书籍名称"), bookName);
+        grid.addRow(1, new Label("书籍作者"), author);
+        grid.addRow(2, new Label("书籍价格"), price);
+        grid.addRow(3,new Label("出版社",publishingHouse));
+        grid.addRow(4,new Label("数量",amount));
         grid.setHgap(10);
         grid.setVgap(10);
-        GridPane.setHgrow(firstNameField, Priority.ALWAYS);
-        GridPane.setHgrow(lastNameField, Priority.ALWAYS);
+        GridPane.setHgrow(bookName, Priority.ALWAYS);
+        GridPane.setHgrow(author, Priority.ALWAYS);
+        GridPane.setHgrow(price, Priority.ALWAYS);
+        GridPane.setHgrow(publishingHouse, Priority.ALWAYS);
+        GridPane.setHgrow(amount, Priority.ALWAYS);
 
         // create action buttons for the dialog.
-        Button ok = new Button("OK");
+        // 为新增框创建一个操作按钮
+        Button ok = new Button("新增");
         ok.setDefaultButton(true);
-        Button cancel = new Button("Cancel");
+        Button cancel = new Button("取消");
         cancel.setCancelButton(true);
 
         // only enable the ok button when there has been some text entered.
-        ok.disableProperty().bind(firstNameField.textProperty().isEqualTo("").or(lastNameField.textProperty().isEqualTo("")));
+        // 只有在输入框中有数据输入才会允许点击提交按钮
+        ok.disableProperty().bind(bookName.textProperty().isEqualTo("").or(author.textProperty().isEqualTo("")
+                            .or(price.textProperty().isEqualTo("")).or(publishingHouse.textProperty().isEqualTo(""))
+                            .or(amount.textProperty().isEqualTo(""))));
 
         // add action handlers for the dialog buttons.
+        // 将新增的数据添加到表格中
         ok.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                int nextIndex = table.getSelectionModel().getSelectedIndex() + 1;
-                table.getItems().add(nextIndex, new Person(firstNameField.getText(), lastNameField.getText()));
-                table.getSelectionModel().select(nextIndex);
+                Book book = new Book(bookName.getText(), author.getText(), Double.valueOf(price.getText()), publishingHouse.getText(), Integer.valueOf(amount.getText()));
+
+                BookService bookService = new BookService();
+                int addResult = bookService.addBook(book);
+
+                String result;                  // 根据后台传回数据的不同，展示不同的信息
+                if(addResult == 1){
+                    result = "添加成功";
+                }else if(addResult == 2){
+                    result = "已经存在这本书了";
+                }else {
+                    result = "添加失败";
+                }
+
+                // 返回新增的结果
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("新增结果提示");
+                alert.setHeaderText(null);
+                alert.setContentText(result);
+                alert.showAndWait();
+
+                // 清空输入框
+                bookName.clear();
+                author.clear();
+                price.clear();
+                publishingHouse.clear();
+                amount.clear();
+                table.getItems().add(book);
                 dialog.close();
             }
         });
+
         cancel.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent actionEvent) {
                 dialog.close();
@@ -300,7 +343,6 @@ public class MainView extends Application {
         // layout the dialog.
         HBox buttons = new HBox();
         buttons.getChildren().addAll(ok,cancel);
-//                HBoxBuilder.create().spacing(10).children(ok, cancel).alignment(Pos.CENTER_RIGHT).build();
         VBox layout = new VBox(10);
         layout.getChildren().addAll(grid, buttons);
         layout.setPadding(new Insets(5));
