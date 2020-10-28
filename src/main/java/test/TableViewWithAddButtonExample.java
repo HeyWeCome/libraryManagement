@@ -20,7 +20,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.util.Callback;
-import org.w3c.dom.html.HTMLObjectElement;
 
 public class TableViewWithAddButtonExample extends Application {
     public static void main(String[] args) { launch(args); }

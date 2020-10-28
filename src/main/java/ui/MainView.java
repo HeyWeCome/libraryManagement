@@ -26,6 +26,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
+import model.Book;
 import test.Person;
 
 public class MainView extends Application {
@@ -38,39 +39,52 @@ public class MainView extends Application {
         stage.getIcons().add(new Image("http://icons.iconarchive.com/icons/double-j-design/ravenna-3d/128/Books-icon.png"));
 
         // 创建一个表格
-        final TableView<Person> table = new TableView<>(
+        final TableView<Book> table = new TableView<>(
             FXCollections.observableArrayList(
-                    new Person("Jacob", "Smith"),
-                    new Person("Isabella", "Johnson"),
-                    new Person("Ethanggggggggggggggggggggggggggggg", "Williams"),
-                    new Person("Emma", "Jones"),
-                    new Person("Michael", "Brown")
+                    new Book("Jacob", "Smith",23.2,"清华大学出版社",233),
+                    new Book("my life", "JVB",23.2,"清华大学出版社",39)
             )
         );
 
-        // 定义表格的列名
-        TableColumn<Person, String> firstNameCol = new TableColumn<>("First Name");
-        firstNameCol.setCellValueFactory(new PropertyValueFactory("firstName"));
-        TableColumn<Person, String> lastNameCol = new TableColumn<>("Last Name");
-        lastNameCol.setCellValueFactory(new PropertyValueFactory("lastName"));
-        TableColumn<Person, Boolean> actionCol = new TableColumn<>("Action");
+        /**
+         * 定义列名
+         */
+        TableColumn<Book, String> bookName = new TableColumn<>("书名");
+        bookName.setCellValueFactory(new PropertyValueFactory("bookName"));
+
+        TableColumn<Book, String> author = new TableColumn<>("作者");
+        author.setCellValueFactory(new PropertyValueFactory("author"));
+
+        TableColumn<Book, Double> price = new TableColumn<>("价格");
+        price.setCellValueFactory(new PropertyValueFactory("price"));
+
+        TableColumn<Book, String> publishingHouse = new TableColumn<>("出版社");
+        publishingHouse.setCellValueFactory(new PropertyValueFactory("publishingHouse"));
+
+        TableColumn<Book, Integer> amount = new TableColumn<>("数量");
+        amount.setCellValueFactory(new PropertyValueFactory("amount"));
+
+        TableColumn<Book, String> createTime = new TableColumn<>("入库时间");
+        createTime.setCellValueFactory(new PropertyValueFactory("createTime"));
+
+        TableColumn<Book, Boolean> actionCol = new TableColumn<>("删除");
         actionCol.setSortable(false);
 
         // define a simple boolean cell value for the action column so that the column will only be shown for non-empty rows.
-        actionCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Person, Boolean>, ObservableValue<Boolean>>() {
-            @Override public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<Person, Boolean> features) {
+        actionCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Book, Boolean>, ObservableValue<Boolean>>() {
+            @Override public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<Book, Boolean> features) {
                 return new SimpleBooleanProperty(features.getValue() != null);
             }
         });
 
         // create a cell value factory with an add button for each row in the table.
-        actionCol.setCellFactory(new Callback<TableColumn<Person, Boolean>, TableCell<Person, Boolean>>() {
-            @Override public TableCell<Person, Boolean> call(TableColumn<Person, Boolean> personBooleanTableColumn) {
+        actionCol.setCellFactory(new Callback<TableColumn<Book, Boolean>, TableCell<Book, Boolean>>() {
+            @Override public TableCell<Book, Boolean> call(TableColumn<Book, Boolean> personBooleanTableColumn) {
                 return new AddPersonCell(stage, table);
             }
         });
 
-        table.getColumns().setAll(firstNameCol, lastNameCol, actionCol);
+        table.getColumns().setAll(bookName, author, price, publishingHouse, amount,createTime,actionCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         stage.setScene(new Scene(table));
@@ -78,9 +92,9 @@ public class MainView extends Application {
     }
 
     /** A table cell containing a button for adding a new person. */
-    private class AddPersonCell extends TableCell<Person, Boolean> {
+    private class AddPersonCell extends TableCell<Book, Boolean> {
         // a button for adding a new person.
-        final Button addButton       = new Button("Add");
+        final Button deleteButton       = new Button("删除");
         // pads and centers the add button in the cell.
         final StackPane paddedButton = new StackPane();
         // records the y pos of the last button press so that the add person dialog can be shown next to the cell.
@@ -93,13 +107,13 @@ public class MainView extends Application {
          */
         AddPersonCell(final Stage stage, final TableView table) {
             paddedButton.setPadding(new Insets(3));
-            paddedButton.getChildren().add(addButton);
-            addButton.setOnMousePressed(new EventHandler<MouseEvent>() {
+            paddedButton.getChildren().add(deleteButton);
+            deleteButton.setOnMousePressed(new EventHandler<MouseEvent>() {
                 @Override public void handle(MouseEvent mouseEvent) {
                     buttonY.set(mouseEvent.getScreenY());
                 }
             });
-            addButton.setOnAction(new EventHandler<ActionEvent>() {
+            deleteButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent actionEvent) {
                     showAddPersonDialog(stage, table, buttonY.get());
                     table.getSelectionModel().select(getTableRow().getIndex());
