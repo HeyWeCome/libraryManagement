@@ -104,8 +104,16 @@ public class MainView extends Application {
             }
         });
         table.setItems(data);
+        VBox mainPane = new VBox();
+        Button addButton = new Button("新增书籍");
+        addButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent actionEvent) {
+                showAddPersonDialog(stage, table);
+            }
+        });
+        mainPane.getChildren().addAll(addButton,table);
 
-        stage.setScene(new Scene(table));
+        stage.setScene(new Scene(mainPane));
         stage.show();
     }
 
@@ -120,6 +128,9 @@ public class MainView extends Application {
         final StackPane paddedButton = new StackPane();
         // records the y pos of the last button press so that the add person dialog can be shown next to the cell.
         final DoubleProperty buttonY = new SimpleDoubleProperty();
+
+        public AddBookCell(){
+        }
 
         /**
          * AddPersonCell constructor
@@ -136,7 +147,7 @@ public class MainView extends Application {
             });
             deleteButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent actionEvent) {
-                    showAddPersonDialog(stage, table, buttonY.get());
+                    showAddPersonDialog(stage, table);
                     table.getSelectionModel().select(getTableRow().getIndex());
                     //Person person = new Person();
                     //table.getSelectionModel().select(getIndex());
@@ -146,7 +157,8 @@ public class MainView extends Application {
         }
 
         /** places an add button in the row only if the row is not empty. */
-        @Override protected void updateItem(Boolean item, boolean empty) {
+        @Override
+        protected void updateItem(Boolean item, boolean empty) {
             super.updateItem(item, empty);
             if (!empty) {
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -250,17 +262,15 @@ public class MainView extends Application {
      * 在添加书籍的时候展示一个新的框
      * @param parent a parent stage to which this dialog will be modal and placed next to.
      * @param table the table to which a book is to be added.
-     * @param y the y position of the top left corner of the dialog.
      */
-    private void showAddPersonDialog(Stage parent, final TableView<Book> table, double y) {
+    private void showAddPersonDialog(Stage parent, final TableView<Book> table) {
         // 初始化对话框
         final Stage dialog = new Stage();
-        dialog.setTitle("New Person");
+        dialog.setTitle("新增书籍");
         dialog.initOwner(parent);                    // 对话框永远在前面
         dialog.initModality(Modality.WINDOW_MODAL);  // 必须关闭对话框后才能操作其他的
         dialog.initStyle(StageStyle.UTILITY);        // 对话框-只保留关闭按钮
         dialog.setX(parent.getX() + parent.getWidth());
-        dialog.setY(y);
 
         // create a grid for the data entry.
         // 为输入创建面板
@@ -278,11 +288,11 @@ public class MainView extends Application {
         grid.addRow(4,new Label("数量",amount));
         grid.setHgap(10);
         grid.setVgap(10);
-        GridPane.setHgrow(bookName, Priority.ALWAYS);
-        GridPane.setHgrow(author, Priority.ALWAYS);
-        GridPane.setHgrow(price, Priority.ALWAYS);
-        GridPane.setHgrow(publishingHouse, Priority.ALWAYS);
-        GridPane.setHgrow(amount, Priority.ALWAYS);
+//        GridPane.setHgrow(bookName, Priority.ALWAYS);
+//        GridPane.setHgrow(author, Priority.ALWAYS);
+//        GridPane.setHgrow(price, Priority.ALWAYS);
+//        GridPane.setHgrow(publishingHouse, Priority.ALWAYS);
+//        GridPane.setHgrow(amount, Priority.ALWAYS);
 
         // create action buttons for the dialog.
         // 为新增框创建一个操作按钮
@@ -302,19 +312,18 @@ public class MainView extends Application {
         ok.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                Book book = new Book(bookName.getText(), author.getText(), Double.valueOf(price.getText()), publishingHouse.getText(), Integer.valueOf(amount.getText()));
+                Book book = new Book(bookName.getText(), author.getText(),
+                                     Double.valueOf(price.getText()), publishingHouse.getText(),
+                                     Integer.valueOf(amount.getText()));
 
                 BookService bookService = new BookService();
                 int addResult = bookService.addBook(book);
 
-                String result;                  // 根据后台传回数据的不同，展示不同的信息
-                if(addResult == 1){
-                    result = "添加成功";
-                }else if(addResult == 2){
-                    result = "已经存在这本书了";
-                }else {
-                    result = "添加失败";
-                }
+                // 根据后台传回数据的不同，展示不同的信息
+                String result;
+                if(addResult == 1) result = "添加成功";
+                else if(addResult == 2) result = "已经存在这本书了";
+                else result = "添加失败";
 
                 // 返回新增的结果
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
