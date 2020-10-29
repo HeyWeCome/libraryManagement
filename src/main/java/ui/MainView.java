@@ -284,15 +284,15 @@ public class MainView extends Application {
         grid.addRow(0, new Label("书籍名称"), bookName);
         grid.addRow(1, new Label("书籍作者"), author);
         grid.addRow(2, new Label("书籍价格"), price);
-        grid.addRow(3,new Label("出版社",publishingHouse));
-        grid.addRow(4,new Label("数量",amount));
-        grid.setHgap(10);
-        grid.setVgap(10);
-//        GridPane.setHgrow(bookName, Priority.ALWAYS);
-//        GridPane.setHgrow(author, Priority.ALWAYS);
-//        GridPane.setHgrow(price, Priority.ALWAYS);
-//        GridPane.setHgrow(publishingHouse, Priority.ALWAYS);
-//        GridPane.setHgrow(amount, Priority.ALWAYS);
+        grid.addRow(3,new Label("书籍出版社"),publishingHouse);
+        grid.addRow(4,new Label("书籍数量"),amount);
+//        grid.setHgap(10);
+//        grid.setVgap(10);
+        grid.setHgrow(bookName, Priority.ALWAYS);
+        grid.setHgrow(author, Priority.ALWAYS);
+        grid.setHgrow(price, Priority.ALWAYS);
+        grid.setHgrow(publishingHouse, Priority.ALWAYS);
+        grid.setHgrow(amount, Priority.ALWAYS);
 
         // create action buttons for the dialog.
         // 为新增框创建一个操作按钮
