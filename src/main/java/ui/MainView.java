@@ -162,7 +162,11 @@ public class MainView extends Application {
             modifyButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
-
+                    // 聚焦至要删除的那一行数据
+                    table.getSelectionModel().select(getTableRow().getIndex());
+                    // 获取要修改的书籍信息
+                    Book modifiedBook = (Book) table.getSelectionModel().getSelectedItem();
+                    showModifyBookDialog(stage,table,modifiedBook);
                 }
             });
 
@@ -307,6 +311,108 @@ public class MainView extends Application {
                 publishingHouse.clear();
                 amount.clear();
                 // 解决表格中新增书籍，超过每页限额的时候还是会添加的bug，还有删除新增书籍的bug
+                bookTable.updateTable(getTableData());
+                dialog.close();
+            }
+        });
+
+        cancel.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent actionEvent) {
+                dialog.close();
+            }
+        });
+
+        // layout the dialog.
+        // 放置对话框
+        HBox buttons = new HBox();
+        buttons.getChildren().addAll(ok,cancel);
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(grid, buttons);
+        layout.setPadding(new Insets(5));
+        dialog.setScene(new Scene(layout));
+        dialog.setResizable(false);     // 禁止缩放
+        dialog.show();
+    }
+
+    /**
+     * shows a dialog which displays a UI for modifying a book in the table.
+     * 在用户点击修改表格的时候，弹出一个修改对话框
+     *
+     * @param parent 表格展示所在的舞台，
+     * @param table  数据来源，修改的书籍所在的表格
+     * @param book   修改的书籍信息
+     */
+    private void showModifyBookDialog(Stage parent, final TableView<Book> table, Book book){
+        // 初始化对话框
+        final Stage dialog = new Stage();
+        dialog.setTitle("修改书籍");
+        dialog.initOwner(parent);                    // 对话框永远在前面
+        dialog.initModality(Modality.WINDOW_MODAL);  // 必须关闭对话框后才能操作其他的
+        dialog.initStyle(StageStyle.UTILITY);        // 对话框-只保留关闭按钮
+        dialog.setX(parent.getX() + parent.getWidth());
+
+        // create a grid for the data entry and put data into it.
+        // 为输入创建面板，并填充数据
+        GridPane grid = new GridPane();
+        final TextField bookName = new TextField(book.getBookName());
+        final TextField author = new TextField(book.getAuthor());
+        final TextField price = new TextField(String.valueOf(book.getPrice()));
+        final TextField publishingHouse = new TextField(book.getPublishingHouse());
+        final TextField amount = new TextField(String.valueOf(book.getAmount()));
+
+        // 将输入框添加至面板中
+        grid.addRow(0, new Label("书籍名称"), bookName);
+        grid.addRow(1, new Label("书籍作者"), author);
+        grid.addRow(2, new Label("书籍价格"), price);
+        grid.addRow(3,new Label("书籍出版社"),publishingHouse);
+        grid.addRow(4,new Label("书籍数量"),amount);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setHgrow(bookName, Priority.ALWAYS);
+        grid.setHgrow(author, Priority.ALWAYS);
+        grid.setHgrow(price, Priority.ALWAYS);
+        grid.setHgrow(publishingHouse, Priority.ALWAYS);
+        grid.setHgrow(amount, Priority.ALWAYS);
+
+        // create action buttons for the dialog.
+        // 为新增框创建一个操作按钮
+        Button ok = new Button("修改");
+        ok.setDefaultButton(true);
+        Button cancel = new Button("取消");
+        cancel.setCancelButton(true);
+
+        // only enable the ok button when there has been some text entered.
+        // 只有在输入框中有数据输入才会允许点击提交按钮
+        ok.disableProperty().bind(bookName.textProperty().isEqualTo("").or(author.textProperty().isEqualTo("")
+                .or(price.textProperty().isEqualTo("")).or(publishingHouse.textProperty().isEqualTo(""))
+                .or(amount.textProperty().isEqualTo(""))));
+
+        // add action handlers for the dialog buttons.
+        // 处理需要修改的数据
+        ok.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                book.setBookName(bookName.getText());
+                book.setAuthor(author.getText());
+                book.setPrice(Double.valueOf(price.getText()));
+                book.setPublishingHouse(publishingHouse.getText());
+                book.setAmount(Integer.valueOf(amount.getText()));
+
+                System.out.println("要修改的书籍信息：" + book.toString());
+                BookService bookService = new BookService();
+                int modifyResult = bookService.modifyBook(book);
+
+                // 根据后台传回数据的不同，展示不同的信息
+                String result = (modifyResult == 1) ? "修改成功" : "修改失败";
+
+                // 返回新增的结果
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("修改结果提示");
+                alert.setHeaderText(null);
+                alert.setContentText(result);
+                alert.showAndWait();
+
+                // 解决表格中新增书籍，超过每页限额的时候还是会添加的bug，还有删除新增书籍、修改书籍的bug
                 bookTable.updateTable(getTableData());
                 dialog.close();
             }

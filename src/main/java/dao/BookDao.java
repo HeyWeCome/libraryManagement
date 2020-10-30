@@ -206,7 +206,7 @@ public class BookDao {
     public int modifyBook(Book book){
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "update book set book_name=?,author=?,price=?,publishing_house=?,amout=? where id=?";
+        String sql = "update book set book_name=?,author=?,price=?,publishing_house=?,amount=? where id=?";
         int result = 0;
 
         try{
