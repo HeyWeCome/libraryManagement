@@ -57,13 +57,25 @@ public class MainView extends Application {
         addButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                showAddPersonDialog(stage, table);
+                showAddBookDialog(stage, table);
             }
         });
 
-        mainPane.setTop(addButton);
+        Label label = new Label("搜一搜");
+        TextField search = new TextField();
+
+
+
+        HBox head = new HBox();
+        head.setSpacing(700);
+        HBox searchComp = new HBox(label,search);
+        searchComp.setSpacing(20);
+        searchComp.getChildren().addAll();
+        head.getChildren().addAll(addButton,searchComp);
+        mainPane.setTop(head);
         mainPane.setCenter(bookTable.getTableViewWithPaginationPane());
         stage.setScene(new Scene(mainPane,1000,400));
+        stage.setResizable(false);
         stage.show();
     }
 
@@ -184,7 +196,6 @@ public class MainView extends Application {
                             deleteResultNotify.setContentText("删除失败");
                             deleteResultNotify.showAndWait();
                         }
-
                     } else {
                         alert.close();
                     }
@@ -214,7 +225,7 @@ public class MainView extends Application {
      * @param parent a parent stage to which this dialog will be modal and placed next to.
      * @param table the table to which a book is to be added.
      */
-    private void showAddPersonDialog(Stage parent, final TableView<Book> table) {
+    private void showAddBookDialog(Stage parent, final TableView<Book> table) {
         // 初始化对话框
         final Stage dialog = new Stage();
         dialog.setTitle("新增书籍");
@@ -310,6 +321,7 @@ public class MainView extends Application {
         layout.getChildren().addAll(grid, buttons);
         layout.setPadding(new Insets(5));
         dialog.setScene(new Scene(layout));
+        dialog.setResizable(false);     // 禁止缩放
         dialog.show();
     }
 
@@ -318,7 +330,7 @@ public class MainView extends Application {
      */
     public void searchAllBooks(){
         BookService bookService = new BookService();
-        ArrayList<Book> books = bookService.searchAllBook();
+        List<Book> books = bookService.searchAllBook();
         dataList.clear();
 
         for (Book book : books) {
@@ -337,5 +349,12 @@ public class MainView extends Application {
         return bookService.searchAllBook();
     }
 
+    public TableWithPaginationAndSorting<Book> getBookTable() {
+        return bookTable;
+    }
+
+    public void setBookTable(TableWithPaginationAndSorting<Book> bookTable) {
+        this.bookTable = bookTable;
+    }
 }
 

@@ -2,7 +2,6 @@ package model;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.TableView;
-
 import java.util.List;
 
 /**
@@ -26,7 +25,11 @@ public class TableWithPaginationAndSorting<T> {
     private TableView<T> tableView;
     private Pagination tableViewWithPaginationPane;
 
-    /** getter **/
+    /**
+     * 构造方法
+     * @param page 传入的Page类
+     * @param tableView 需要展示的tableView，数据最后存放的地方
+     */
     public TableWithPaginationAndSorting(Page<T> page, TableView<T> tableView) {
         this.page = page;
         this.tableView = tableView;
@@ -35,6 +38,10 @@ public class TableWithPaginationAndSorting<T> {
         updatePagination();
     }
 
+    /**
+     * 将Pagination的pageCountProperty和Page对象的page.totalPageProperty属性进行双向绑定
+     * 这样他们的值就会同步：其中一个改变，另一个也会改变，并且值保持一样
+     */
     private void updatePagination() {
         tableViewWithPaginationPane.setPageFactory(pageIndex -> {
             tableView.setItems(FXCollections.observableList(page.getCurrentPageDataList(pageIndex)));
@@ -42,6 +49,12 @@ public class TableWithPaginationAndSorting<T> {
         });
     }
 
+    /**
+     * 做到两件事情：
+     *  1. 同步页码；
+     *  2. 动态刷新表格中的数据
+     * @param data
+     */
     public void updateTable(List<T> data){
         tableViewWithPaginationPane.setPageFactory(pageIndex -> {
             page.setRowDataList(data);
