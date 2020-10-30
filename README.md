@@ -16,7 +16,14 @@
 
 ~~~markdown
 待完成：
-  1. 模糊搜索
+  1. 模糊搜索 √
+  2. 点击修改
 ~~~
 
 ### 页面展示
+1. 首页
+[![BtEVLF.png](https://s1.ax1x.com/2020/10/30/BtEVLF.png)](https://imgchr.com/i/BtEVLF)
+
+2. 新增图书
+[![BtEIyT.png](https://s1.ax1x.com/2020/10/30/BtEIyT.png)](https://imgchr.com/i/BtEIyT)
+[![BtE5lV.png](https://s1.ax1x.com/2020/10/30/BtE5lV.png)](https://imgchr.com/i/BtE5lV)
