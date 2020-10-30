@@ -1,9 +1,9 @@
 package model;
 import javafx.collections.FXCollections;
-import javafx.scene.Node;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.TableView;
-import javafx.util.Callback;
+
+import java.util.List;
 
 /**
  * @description:
@@ -39,6 +39,14 @@ public class TableWithPaginationAndSorting<T> {
         tableViewWithPaginationPane.setPageFactory(pageIndex -> {
             tableView.setItems(FXCollections.observableList(page.getCurrentPageDataList(pageIndex)));
             System.out.println("当前的页面为："+pageIndex);
+            return tableView;
+        });
+    }
+
+    public void updateTable(List<T> data){
+        tableViewWithPaginationPane.setPageFactory(pageIndex -> {
+            page.setRowDataList(data);
+            tableView.setItems(FXCollections.observableList(page.getCurrentPageDataList(pageIndex)));
             return tableView;
         });
     }

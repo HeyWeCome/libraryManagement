@@ -40,9 +40,11 @@ import java.util.Optional;
  */
 
 public class MainView extends Application {
-    List<Book> dataList = getTableData();                            // 所有的书籍信息
-    TableView<Book> table = new TableView<>();                       // 创建一个表格
-    TableWithPaginationAndSorting<Book> bookTable;
+    private List<Book> dataList = getTableData();                            // 所有的书籍信息
+    private TableView<Book> table = new TableView<>();                       // 创建一个表格
+    private TableWithPaginationAndSorting<Book> bookTable;
+    private Page<Book> page = new Page<>(dataList, 6);              // 创建Page对象 create Page object
+    private BorderPane mainPane = new BorderPane();
 
     public static void main(String[] args) { launch(args); }
 
@@ -54,23 +56,20 @@ public class MainView extends Application {
 
         table = createTable(stage);
         table.setItems(FXCollections.observableList(dataList));
-        // 创建Page对象 create Page object
-        Page<Book> page = new Page<>(dataList, 6);
 
         // add pagination into table
         bookTable = new TableWithPaginationAndSorting<>(page, table);
 
-        BorderPane mainPane = new BorderPane();
         Button addButton = new Button("新增书籍");
         addButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent actionEvent) {
+            @Override
+            public void handle(ActionEvent actionEvent) {
                 showAddPersonDialog(stage, table);
             }
         });
 
         mainPane.setTop(addButton);
         mainPane.setCenter(bookTable.getTableViewWithPaginationPane());
-//        mainPane.getChildren().addAll(addButton,bookTable.getTableViewWithPaginationPane());
         stage.setScene(new Scene(mainPane,1000,500));
         stage.show();
     }
@@ -124,58 +123,6 @@ public class MainView extends Application {
         // 设置表格自适应
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         return table;
-    }
-
-    /**
-     * A table cell containing a button for adding a new book.
-     * 新增书籍按钮
-     */
-    private class AddBookCell extends TableCell<Book, Boolean> {
-        // a button for adding a new person.
-        final Button deleteButton = new Button("新增");
-        // pads and centers the add button in the cell.
-        final StackPane paddedButton = new StackPane();
-        // records the y pos of the last button press so that the add person dialog can be shown next to the cell.
-        final DoubleProperty buttonY = new SimpleDoubleProperty();
-
-        public AddBookCell(){
-        }
-
-        /**
-         * AddPersonCell constructor
-         * @param stage the stage in which the table is placed.
-         * @param table the table to which a new person can be added.
-         */
-        AddBookCell(final Stage stage, final TableView table) {
-            paddedButton.setPadding(new Insets(3));
-            paddedButton.getChildren().add(deleteButton);
-            deleteButton.setOnMousePressed(new EventHandler<MouseEvent>() {
-                @Override public void handle(MouseEvent mouseEvent) {
-                    buttonY.set(mouseEvent.getScreenY());
-                }
-            });
-            deleteButton.setOnAction(new EventHandler<ActionEvent>() {
-                @Override public void handle(ActionEvent actionEvent) {
-                    showAddPersonDialog(stage, table);
-                    table.getSelectionModel().select(getTableRow().getIndex());
-                    //Person person = new Person();
-                    //table.getSelectionModel().select(getIndex());
-                    //person = table.getSelectionModel().getSelectedItem();
-                }
-            });
-        }
-
-        /** places an add button in the row only if the row is not empty. */
-        @Override
-        protected void updateItem(Boolean item, boolean empty) {
-            super.updateItem(item, empty);
-            if (!empty) {
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                setGraphic(paddedButton);
-            } else {
-                setGraphic(null);
-            }
-        }
     }
 
     /**
@@ -349,7 +296,8 @@ public class MainView extends Application {
                 price.clear();
                 publishingHouse.clear();
                 amount.clear();
-                table.getItems().add(book);
+                // 解决表格中新增书籍，超过每页限额的时候还是会添加的bug，还有删除新增书籍的bug
+                bookTable.updateTable(getTableData());
                 dialog.close();
             }
         });
@@ -378,7 +326,6 @@ public class MainView extends Application {
         BookService bookService = new BookService();
         ArrayList<Book> books = bookService.searchAllBook();
         dataList.clear();
-//        data.clear();       // 首先全部清空
 
         for (Book book : books) {
             dataList.add(book);
