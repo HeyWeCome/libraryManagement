@@ -34,10 +34,10 @@ public class BookDao {
     public List<Book> queryAllBook(){
         Connection conn = null;
         PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;         // 查询的结果
-        List<Book> books = new ArrayList<>();              // 最后返回的结果
+        ResultSet resultSet = null;                 // 查询的结果
+        List<Book> books = new ArrayList<>();       // 最后返回的结果
 
-        String sql = "select * from book";
+        String sql = "select * from book order by create_time desc";
 
         try{
             conn = DBUtils.getConnection();
@@ -96,13 +96,48 @@ public class BookDao {
     };
 
     /**
-     * @param id
+     * 模糊搜索书籍信息
+     * @param condition 用户输入的关键词
      * @return
-     * @description 查询单个书籍
      */
-    public String queryOneBook(String id){
-        return "select * from book where id="+"'"+id+"'";
+    public List<Book> fuzzySearchBook(String condition){
+        Connection conn = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;                 // 查询的结果
+        List<Book> books = new ArrayList<>();       // 最后返回的结果
+
+        String sql = "select * from book where book_name LIKE ? or author LIKE ?" +
+                     " or publishing_house LIKE ? or create_time LIKE ?";
+        try{
+            conn = DBUtils.getConnection();
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1,"%"+condition+"%");
+            preparedStatement.setString(2,"%"+condition+"%");
+            preparedStatement.setString(3,"%"+condition+"%");
+            preparedStatement.setString(4,"%"+condition+"%");
+
+            resultSet = preparedStatement.executeQuery();       // 执行查询之后的结果
+
+            while (resultSet.next()){
+                String id = resultSet.getString("id");
+                String bookName = resultSet.getString("book_name");
+                String author = resultSet.getString("author");
+                double price = resultSet.getDouble("price");
+                String publishingHouse = resultSet.getString("publishing_house");
+                int amount = resultSet.getInt("amount");
+                String createTime = resultSet.getString("create_time");
+
+                books.add(new Book(id,bookName,author,price,publishingHouse,amount,createTime));
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+            System.out.println("模糊查询数据失败");
+        }finally{
+            DBUtils.close(resultSet, preparedStatement, conn);
+        }
+        return books;
     }
+
 
     /**
      * @param: Book

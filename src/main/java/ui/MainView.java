@@ -3,6 +3,7 @@ import javafx.application.Application;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -22,7 +23,6 @@ import model.Page;
 import model.TableWithPaginationAndSorting;
 import service.BookService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -64,7 +64,12 @@ public class MainView extends Application {
         Label label = new Label("搜一搜");
         TextField search = new TextField();
 
-
+        search.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                dynamicRefreshTable(search.getText());
+            }
+        });
 
         HBox head = new HBox();
         head.setSpacing(700);
@@ -338,6 +343,22 @@ public class MainView extends Application {
         }
 
         table.refresh();
+    }
+
+    /**
+     * 根据模糊搜索的结果 动态刷新表格数据
+     * @param condition
+     */
+    public void dynamicRefreshTable(String condition){
+        BookService bookService = new BookService();
+        List<Book> books = bookService.fuzzySearchBook(condition);
+        dataList.clear();
+
+        for (Book book : books) {
+            dataList.add(book);
+        }
+
+        bookTable.updateTable(dataList);
     }
 
     /**

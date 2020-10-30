@@ -73,6 +73,17 @@ public class BookService {
         return result;
     }
 
+    /**
+     * 模糊搜索书籍信息
+     * @param condition
+     * @return
+     */
+    public List<Book> fuzzySearchBook(String condition){
+        BookDao bookDao = new BookDao();
+        List<Book> books = bookDao.fuzzySearchBook(condition);
+        return books;
+    }
+
     // 获取到所有的书籍
     public ArrayList<Book> getBooks() {
         return books;
