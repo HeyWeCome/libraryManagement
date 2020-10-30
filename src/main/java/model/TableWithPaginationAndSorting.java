@@ -38,7 +38,6 @@ public class TableWithPaginationAndSorting<T> {
     private void updatePagination() {
         tableViewWithPaginationPane.setPageFactory(pageIndex -> {
             tableView.setItems(FXCollections.observableList(page.getCurrentPageDataList(pageIndex)));
-            System.out.println("当前的页面为："+pageIndex);
             return tableView;
         });
     }
@@ -46,6 +45,7 @@ public class TableWithPaginationAndSorting<T> {
     public void updateTable(List<T> data){
         tableViewWithPaginationPane.setPageFactory(pageIndex -> {
             page.setRowDataList(data);
+            page.updatePage();
             tableView.setItems(FXCollections.observableList(page.getCurrentPageDataList(pageIndex)));
             return tableView;
         });

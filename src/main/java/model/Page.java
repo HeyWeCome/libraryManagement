@@ -55,6 +55,14 @@ public class Page<T> {
     }
 
     /**
+     * 为了解决一个问题：
+     * 删除，新增数据的时候，Page中的数据没有得到更新，导致出现了数据不统一的情况
+     */
+    public void updatePage(){
+        initialize();
+    }
+
+    /**
      * 会根据传入的页码，返回当前页的数据
      * current page number(0-based system)
      *

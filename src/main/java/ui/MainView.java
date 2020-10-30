@@ -5,31 +5,24 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import model.Book;
 import model.Page;
 import model.TableWithPaginationAndSorting;
 import service.BookService;
-import test.TableWithPaginationAndSortingTest;
 
-import javax.imageio.ImageReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -43,7 +36,7 @@ public class MainView extends Application {
     private List<Book> dataList = getTableData();                            // 所有的书籍信息
     private TableView<Book> table = new TableView<>();                       // 创建一个表格
     private TableWithPaginationAndSorting<Book> bookTable;
-    private Page<Book> page = new Page<>(dataList, 6);              // 创建Page对象 create Page object
+    private Page<Book> page = new Page<>(dataList, 10);              // 创建Page对象 create Page object
     private BorderPane mainPane = new BorderPane();
 
     public static void main(String[] args) { launch(args); }
@@ -70,7 +63,7 @@ public class MainView extends Application {
 
         mainPane.setTop(addButton);
         mainPane.setCenter(bookTable.getTableViewWithPaginationPane());
-        stage.setScene(new Scene(mainPane,1000,500));
+        stage.setScene(new Scene(mainPane,1000,400));
         stage.show();
     }
 
@@ -182,6 +175,8 @@ public class MainView extends Application {
                             deleteResultNotify.setHeaderText(null);
                             deleteResultNotify.setContentText("删除成功");
                             deleteResultNotify.showAndWait();
+                            dataList.remove(deleteBook);
+                            bookTable.updateTable(dataList);
                         }else {
                             Alert deleteResultNotify = new Alert(Alert.AlertType.WARNING);
                             deleteResultNotify.setTitle("删除结果提示");
@@ -189,8 +184,7 @@ public class MainView extends Application {
                             deleteResultNotify.setContentText("删除失败");
                             deleteResultNotify.showAndWait();
                         }
-                        dataList.remove(deleteBook);
-                        bookTable.getTableView().refresh();
+
                     } else {
                         alert.close();
                     }
