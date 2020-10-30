@@ -36,7 +36,7 @@ public class MainView extends Application {
     private List<Book> dataList = getTableData();                            // 所有的书籍信息
     private TableView<Book> table = new TableView<>();                       // 创建一个表格
     private TableWithPaginationAndSorting<Book> bookTable;
-    private Page<Book> page = new Page<>(dataList, 10);              // 创建Page对象 create Page object
+    private Page<Book> page = new Page<>(dataList, 10);             // 创建Page对象 create Page object
     private BorderPane mainPane = new BorderPane();
 
     public static void main(String[] args) { launch(args); }
@@ -437,21 +437,6 @@ public class MainView extends Application {
     }
 
     /**
-     * 查找所有的书籍，每次都重新覆盖前台数据
-     */
-    public void searchAllBooks(){
-        BookService bookService = new BookService();
-        List<Book> books = bookService.searchAllBook();
-        dataList.clear();
-
-        for (Book book : books) {
-            dataList.add(book);
-        }
-
-        table.refresh();
-    }
-
-    /**
      * 根据模糊搜索的结果 动态刷新表格数据
      * @param condition
      */
@@ -474,14 +459,6 @@ public class MainView extends Application {
     private List<Book> getTableData() {
         BookService bookService = new BookService();
         return bookService.searchAllBook();
-    }
-
-    public TableWithPaginationAndSorting<Book> getBookTable() {
-        return bookTable;
-    }
-
-    public void setBookTable(TableWithPaginationAndSorting<Book> bookTable) {
-        this.bookTable = bookTable;
     }
 }
 
