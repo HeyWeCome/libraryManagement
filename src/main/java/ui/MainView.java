@@ -1,12 +1,4 @@
 package ui;
-
-/**
- * @description:
- * @author: HeyWeCome
- * @createDate: 2020/10/28 18:43
- * @version: 1.0
- */
-
 import javafx.application.Application;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -17,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -29,15 +22,27 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import model.Book;
+import model.Page;
+import model.TableWithPaginationAndSorting;
 import service.BookService;
-import test.Person;
+import test.TableWithPaginationAndSortingTest;
 
+import javax.imageio.ImageReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+/**
+ * @description:
+ * @author: HeyWeCome
+ * @createDate: 2020/10/28 18:43
+ * @version: 1.0
+ */
 
 public class MainView extends Application {
-    ObservableList<Book> data = FXCollections.observableArrayList(); // 所有的书籍信息
-    final TableView<Book> table = new TableView<>();                 // 创建一个表格
+    List<Book> dataList = getTableData();                            // 所有的书籍信息
+    TableView<Book> table = new TableView<>();                       // 创建一个表格
+    TableWithPaginationAndSorting<Book> bookTable;
 
     public static void main(String[] args) { launch(args); }
 
@@ -47,10 +52,36 @@ public class MainView extends Application {
         // 添加图标
         stage.getIcons().add(new Image("http://icons.iconarchive.com/icons/double-j-design/ravenna-3d/128/Books-icon.png"));
 
+        table = createTable(stage);
+        table.setItems(FXCollections.observableList(dataList));
+        // 创建Page对象 create Page object
+        Page<Book> page = new Page<>(dataList, 6);
+
+        // add pagination into table
+        bookTable = new TableWithPaginationAndSorting<>(page, table);
+
+        BorderPane mainPane = new BorderPane();
+        Button addButton = new Button("新增书籍");
+        addButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent actionEvent) {
+                showAddPersonDialog(stage, table);
+            }
+        });
+
+        mainPane.setTop(addButton);
+        mainPane.setCenter(bookTable.getTableViewWithPaginationPane());
+//        mainPane.getChildren().addAll(addButton,bookTable.getTableViewWithPaginationPane());
+        stage.setScene(new Scene(mainPane,1000,500));
+        stage.show();
+    }
+
+    private TableView<Book> createTable(Stage stage){
         /**
          * 定义列名
          * Define column names
          */
+        TableView<Book> table = new TableView<>();
+
         TableColumn<Book, String> bookName = new TableColumn<>("书名");
         bookName.setCellValueFactory(new PropertyValueFactory("bookName"));
 
@@ -85,36 +116,14 @@ public class MainView extends Application {
         // 在表格中的每一行都放置一个删除以及修改按钮
         operator.setCellFactory(new Callback<TableColumn<Book, Boolean>, TableCell<Book, Boolean>>() {
             @Override public TableCell<Book, Boolean> call(TableColumn<Book, Boolean> personBooleanTableColumn) {
-
                 return new operatorCell(stage, table);
             }
         });
 
-        table.getColumns().setAll(bookName, author, price, publishingHouse, amount,createTime,operator);
+        table.getColumns().addAll(bookName, author, price, publishingHouse, amount,createTime,operator);
         // 设置表格自适应
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        /**
-         * 加载所有的书籍
-         */
-        stage.setOnShowing(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent windowEvent) {
-                searchAllBooks();
-            }
-        });
-        table.setItems(data);
-        VBox mainPane = new VBox();
-        Button addButton = new Button("新增书籍");
-        addButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent actionEvent) {
-                showAddPersonDialog(stage, table);
-            }
-        });
-        mainPane.getChildren().addAll(addButton,table);
-
-        stage.setScene(new Scene(mainPane));
-        stage.show();
+        return table;
     }
 
     /**
@@ -233,7 +242,8 @@ public class MainView extends Application {
                             deleteResultNotify.setContentText("删除失败");
                             deleteResultNotify.showAndWait();
                         }
-                        data.remove(deleteBook);
+                        dataList.remove(deleteBook);
+                        bookTable.getTableView().refresh();
                     } else {
                         alert.close();
                     }
@@ -281,13 +291,14 @@ public class MainView extends Application {
         final TextField publishingHouse = new TextField();
         final TextField amount = new TextField();
 
+        // 将输入框添加至面板中
         grid.addRow(0, new Label("书籍名称"), bookName);
         grid.addRow(1, new Label("书籍作者"), author);
         grid.addRow(2, new Label("书籍价格"), price);
         grid.addRow(3,new Label("书籍出版社"),publishingHouse);
         grid.addRow(4,new Label("书籍数量"),amount);
-//        grid.setHgap(10);
-//        grid.setVgap(10);
+        grid.setHgap(10);
+        grid.setVgap(10);
         grid.setHgrow(bookName, Priority.ALWAYS);
         grid.setHgrow(author, Priority.ALWAYS);
         grid.setHgrow(price, Priority.ALWAYS);
@@ -350,6 +361,7 @@ public class MainView extends Application {
         });
 
         // layout the dialog.
+        // 放置对话框
         HBox buttons = new HBox();
         buttons.getChildren().addAll(ok,cancel);
         VBox layout = new VBox(10);
@@ -365,13 +377,24 @@ public class MainView extends Application {
     public void searchAllBooks(){
         BookService bookService = new BookService();
         ArrayList<Book> books = bookService.searchAllBook();
-        data.clear();       // 首先全部清空
+        dataList.clear();
+//        data.clear();       // 首先全部清空
 
         for (Book book : books) {
-            data.add(book);
+            dataList.add(book);
         }
 
         table.refresh();
     }
+
+    /**
+     * 查找所有的书籍
+     * @return
+     */
+    private List<Book> getTableData() {
+        BookService bookService = new BookService();
+        return bookService.searchAllBook();
+    }
+
 }
 
